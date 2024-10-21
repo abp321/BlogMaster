@@ -1,0 +1,44 @@
+﻿@page "/postdetails/{Id:int}"
+@using BlogMaster.Client.Services.Interfaces
+@using BlogMaster.Shared.Models
+
+@inject IBlogService blogService
+@inject NavigationManager navigationManager
+
+@if (blogPost == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <BlogPostDetailsContent BlogPost="blogPost" OnBack="GoBack" OnCommentAdded="HandleCommentAdded" />
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private BlogDto blogPost;
+
+    protected override void OnInitialized()
+    {
+        blogPost = blogService.GetBlogPost(Id).Result;
+        if (blogPost == null)
+        {
+            // Handle the case where the blog post is not found
+            navigationManager.NavigateTo("/");
+        }
+    }
+
+    void GoBack()
+    {
+        navigationManager.NavigateTo("/");
+    }
+
+    void HandleCommentAdded(CommentDto comment)
+    {
+        blogService.AddComment(blogPost.Id, comment);
+        // Refresh the blog post to get updated comments
+        blogPost = blogService.GetBlogPost(Id).Result;
+    }
+}

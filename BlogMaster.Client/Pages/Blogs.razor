@@ -1,6 +1,46 @@
 ﻿@page "/blogs"
-@rendermode InteractiveAuto
+@using BlogMaster.Client.Services.Interfaces
+@using BlogMaster.Shared.Models
+@inject IBlogService blogService
+@inject NavigationManager NavigationManager
 
-<PageTitle>Blogs</PageTitle>
+<h1>Blog Posts</h1>
+
+<button class="btn btn-primary" @onclick="CreateNewPost">Create New Post</button>
+
+<ul class="list-group mt-3">
+    @foreach (var post in blogs)
+    {
+        <li class="list-group-item">
+            <h3>@post.Title</h3>
+            <p>By @post.Author on @post.PublishedDate.ToString("MM/dd/yyyy") | Views: @post.ViewCount</p>
+            <button class="btn btn-secondary btn-sm" @onclick="() => EditPost(post.Id)">Edit</button>
+            <button class="btn btn-link btn-sm" @onclick="() => ViewPost(post.Id)">View Details</button>
+        </li>
+    }
+</ul>
+
 @code {
+    List<BlogDto> blogs = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        blogs = await blogService.GetBlogPosts();
+        await base.OnInitializedAsync();
+    }
+
+    void CreateNewPost()
+    {
+        NavigationManager.NavigateTo("/editpost");
+    }
+
+    void EditPost(int id)
+    {
+        NavigationManager.NavigateTo($"/editpost/{id}");
+    }
+
+    void ViewPost(int id)
+    {
+        NavigationManager.NavigateTo($"/postdetails/{id}");
+    }
 }

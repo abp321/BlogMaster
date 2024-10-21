@@ -1,0 +1,56 @@
+﻿@page "/editpost"
+@page "/editpost/{Id:int}"
+@using BlogMaster.Client.Services.Interfaces
+@using BlogMaster.Shared.Models
+
+@inject IBlogService blogService
+@inject NavigationManager NavigationManager
+
+<BlogPostEditor BlogPost="blogPost" OnSave="HandleSave" OnCancel="HandleCancel" />
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private BlogDto blogPost = new BlogDto();
+
+    protected override void OnInitialized()
+    {
+        if (Id.HasValue)
+        {
+            var existingPost = blogService.GetBlogPost(Id.Value).Result;
+            if (existingPost != null)
+            {
+                blogPost = new BlogDto
+                {
+                    Id = existingPost.Id,
+                    Title = existingPost.Title,
+                    Content = existingPost.Content,
+                    Author = existingPost.Author,
+                    PublishedDate = existingPost.PublishedDate,
+                    ViewCount = existingPost.ViewCount,
+                    Comments = existingPost.Comments
+                };
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/");
+            }
+        }
+    }
+
+    void HandleSave(BlogDto updatedPost)
+    {
+        if (updatedPost.Id == 0)
+        {
+            updatedPost.PublishedDate = DateTime.Now;
+        }
+        blogService.SaveBlogPost(updatedPost);
+        NavigationManager.NavigateTo("/");
+    }
+
+    void HandleCancel()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

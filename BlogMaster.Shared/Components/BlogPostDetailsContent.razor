@@ -1,0 +1,66 @@
+﻿@using BlogMaster.Shared.Models
+
+@if(BlogPost is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <h1>@BlogPost.Title</h1>
+    <p>
+        <strong>
+            By @BlogPost.Author on @BlogPost.PublishedDate.ToString("MM/dd/yyyy")
+        </strong>
+    </p>
+    <p>@BlogPost.Content</p>
+    <p><em>Views: @BlogPost.ViewCount</em></p>
+
+    <hr />
+
+    <h3>Comments</h3>
+    @if (BlogPost.Comments.Any())
+    {
+        <ul class="list-group">
+            @foreach (var comment in BlogPost.Comments.OrderByDescending(c => c.PostedDate))
+            {
+                <li class="list-group-item">
+                    <strong>@comment.Author</strong> on @comment.PostedDate.ToString("MM/dd/yyyy HH:mm")
+                    <p>@comment.Content</p>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p>No comments yet.</p>
+    }
+
+    <CommentEditor OnCommentSubmitted="OnCommentSubmitted" />
+
+    <button class="btn btn-secondary mt-3" @onclick="OnBackClicked">Back to Posts</button>
+}
+
+@code {
+    [Parameter]
+    public BlogDto? BlogPost { get; set; }
+
+    [Parameter]
+    public EventCallback OnBack { get; set; }
+
+    [Parameter]
+    public EventCallback<CommentDto> OnCommentAdded { get; set; }
+
+    private void OnBackClicked()
+    {
+        OnBack.InvokeAsync(null);
+    }
+
+    private async Task OnCommentSubmitted(CommentDto comment)
+    {
+        if (BlogPost != null)
+        {
+            comment.BlogPostId = BlogPost.Id;
+            await OnCommentAdded.InvokeAsync(comment);
+        }
+    }
+}

@@ -1,0 +1,28 @@
+﻿@using BlogMaster.Shared.Models
+<h4>Add a Comment</h4>
+<div class="form-group">
+    <label>Your Name</label>
+    <input class="form-control" @bind="comment.Author" />
+</div>
+<div class="form-group">
+    <label>Comment</label>
+    <textarea class="form-control" @bind="comment.Content"></textarea>
+</div>
+<button class="btn btn-primary" @onclick="SubmitComment">Submit</button>
+
+@code {
+    [Parameter]
+    public EventCallback<CommentDto> OnCommentSubmitted { get; set; }
+
+    private CommentDto comment = new CommentDto();
+
+    void SubmitComment()
+    {
+        if (!string.IsNullOrWhiteSpace(comment.Author) && !string.IsNullOrWhiteSpace(comment.Content))
+        {
+            comment.PostedDate = DateTime.Now;
+            OnCommentSubmitted.InvokeAsync(comment);
+            comment = new CommentDto();  // Reset the form
+        }
+    }
+}
