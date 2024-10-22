@@ -50,14 +50,14 @@ else
     [Parameter]
     public EventCallback<CommentDto> OnCommentAdded { get; set; }
 
-    private void OnBackClicked()
+    async Task OnBackClicked()
     {
-        OnBack.InvokeAsync(null);
+        await OnBack.InvokeAsync(null);
     }
 
-    private async Task OnCommentSubmitted(CommentDto comment)
+    async Task OnCommentSubmitted(CommentDto comment)
     {
-        if (BlogPost != null)
+        if (BlogPost is not null)
         {
             comment.BlogPostId = BlogPost.Id;
             await OnCommentAdded.InvokeAsync(comment);

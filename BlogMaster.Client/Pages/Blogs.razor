@@ -1,8 +1,9 @@
 ﻿@page "/blogs"
-@using BlogMaster.Client.Services.Interfaces
+@rendermode InteractiveWebAssembly
+@using BlogMaster.Shared.Interfaces
 @using BlogMaster.Shared.Models
 @inject IBlogService blogService
-@inject NavigationManager NavigationManager
+@inject NavigationManager navigationManager
 
 <h1>Blog Posts</h1>
 
@@ -14,8 +15,9 @@
         <li class="list-group-item">
             <h3>@post.Title</h3>
             <p>By @post.Author on @post.PublishedDate.ToString("MM/dd/yyyy") | Views: @post.ViewCount</p>
-            <button class="btn btn-secondary btn-sm" @onclick="() => EditPost(post.Id)">Edit</button>
             <button class="btn btn-link btn-sm" @onclick="() => ViewPost(post.Id)">View Details</button>
+            <button class="btn btn-secondary btn-sm" @onclick="() => EditPost(post.Id)">Edit</button>
+            <button class="btn btn-danger btn-sm" @onclick="async () => await DeletePost(post.Id)">Delete</button>
         </li>
     }
 </ul>
@@ -25,22 +27,28 @@
 
     protected override async Task OnInitializedAsync()
     {
-        blogs = await blogService.GetBlogPosts();
+        blogs = await blogService.GetBlogs() ?? [];
         await base.OnInitializedAsync();
     }
 
     void CreateNewPost()
     {
-        NavigationManager.NavigateTo("/editpost");
+        navigationManager.NavigateTo("/editpost");
     }
 
     void EditPost(int id)
     {
-        NavigationManager.NavigateTo($"/editpost/{id}");
+        navigationManager.NavigateTo($"/editpost/{id}");
     }
 
     void ViewPost(int id)
     {
-        NavigationManager.NavigateTo($"/postdetails/{id}");
+        navigationManager.NavigateTo($"/postdetails/{id}");
+    }
+
+    async Task DeletePost(int id)
+    {
+        await blogService.DeleteBlog(id);
+        await InvokeAsync(StateHasChanged);
     }
 }

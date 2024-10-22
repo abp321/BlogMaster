@@ -1,15 +1,27 @@
-﻿namespace BlogMaster.Shared.Models
-{
-    public class BlogDto
-    {
-        public int Id { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public string Content { get; set; } = string.Empty;
-        public string Author { get; set; } = string.Empty;
-        public DateTime PublishedDate { get; set; }
-        public int ViewCount { get; set; }
-        public List<CommentDto> Comments { get; set; } = [];
+﻿using System.ComponentModel.DataAnnotations;
 
-        public void AddComment(CommentDto comment) => Comments.Add(comment);
+namespace BlogMaster.Models.Entities
+{
+    public class BlogEntity
+    {
+        [Key]
+        public int Id { get; set; }
+
+        [Required]
+        public string Title { get; set; } = string.Empty;
+
+        [Required]
+        public string Content { get; set; } = string.Empty;
+
+        [Required]
+        public string Author { get; set; } = string.Empty;
+
+        [Required]
+        public DateTime PublishedDate { get; set; }
+
+        [Required]
+        public int ViewCount { get; set; }
+
+        public List<CommentEntity> Comments { get; set; } = [];
     }
 }

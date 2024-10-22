@@ -29,13 +29,13 @@
 
     bool IsNewPost => BlogPost?.Id == 0;
 
-    void OnSaveClicked()
+    async Task OnSaveClicked()
     {
-        OnSave.InvokeAsync(BlogPost);
+        await OnSave.InvokeAsync(BlogPost);
     }
 
-    void OnCancelClicked()
+    async Task OnCancelClicked()
     {
-        OnCancel.InvokeAsync(null);
+        await OnCancel.InvokeAsync(null);
     }
 }

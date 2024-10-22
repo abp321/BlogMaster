@@ -1,33 +1,102 @@
-﻿using BlogMaster.Services.Interfaces;
-using BlogMaster.Shared.Models;
+﻿using BlogMaster.Database;
+using BlogMaster.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using BlogMaster.Models.Entities;
 
 namespace BlogMaster.Services.Implementations
 {
-    public class BlogSqlService : IBlogSqlService
+    public class BlogSqlService(BlogDbContext context) : IBlogSqlService
     {
-        public Task<BlogDto> GetBlog(int id)
+        public async Task<BlogEntity?> GetBlog(int id)
         {
-            return Task.FromResult(new BlogDto());
+            return await context.Blogs
+                .Include(b => b.Comments)
+                .FirstOrDefaultAsync(b => b.Id == id);
         }
 
-        public Task<List<BlogDto>> GetBlogs()
+        public async Task<List<BlogEntity>> GetBlogs()
         {
-            return Task.FromResult(new List<BlogDto>());
+            return await context.Blogs
+                .Include(b => b.Comments)
+                .ToListAsync();
         }
 
-        public Task<bool> CreateBlog(BlogDto dto)
+        public async Task<BlogEntity?> CreateBlog(BlogEntity blogEntity)
         {
-            return Task.FromResult(true);
+            try
+            {
+                blogEntity.PublishedDate = DateTime.UtcNow;
+                context.Blogs.Add(blogEntity);
+                await context.SaveChangesAsync();
+                return blogEntity;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
-        public Task<bool> UpdateBlog(BlogDto dto)
+        public async Task<BlogEntity?> UpdateBlog(BlogEntity blogEntity)
         {
-            return Task.FromResult(true);
+            try
+            {
+                var existingBlog = await context.Blogs
+                    .Include(b => b.Comments)
+                    .FirstOrDefaultAsync(b => b.Id == blogEntity.Id);
+
+                if (existingBlog is null) return null;
+
+                context.Entry(existingBlog).CurrentValues.SetValues(blogEntity);
+                UpdateComments(existingBlog, blogEntity.Comments);
+
+                await context.SaveChangesAsync();
+                return await context.Blogs
+                    .Include(b => b.Comments)
+                    .FirstOrDefaultAsync(b => b.Id == existingBlog.Id);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
-        public Task<bool> DeleteBlog(int id)
+        public async Task<bool> DeleteBlog(int id)
         {
-            return Task.FromResult(true);
+            try
+            {
+                var blog = await context.Blogs.FindAsync(id);
+
+                if (blog is null) return false;
+
+                context.Blogs.Remove(blog);
+                await context.SaveChangesAsync();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private void UpdateComments(BlogEntity existingBlog, List<CommentEntity> updatedComments)
+        {
+            var existingCommentIds = existingBlog.Comments.Select(c => c.Id).ToList();
+            var updatedCommentIds = updatedComments.Select(c => c.Id).ToList();
+
+            var commentsToRemove = existingBlog.Comments.Where(c => !updatedCommentIds.Contains(c.Id)).ToList();
+            context.Comments.RemoveRange(commentsToRemove);
+            foreach (var updatedComment in updatedComments)
+            {
+                var existingComment = existingBlog.Comments.FirstOrDefault(c => c.Id == updatedComment.Id);
+                if (existingComment is not null)
+                {
+                    context.Entry(existingComment).CurrentValues.SetValues(updatedComment);
+                }
+                else
+                {
+                    existingBlog.Comments.Add(updatedComment);
+                }
+            }
         }
     }
 }

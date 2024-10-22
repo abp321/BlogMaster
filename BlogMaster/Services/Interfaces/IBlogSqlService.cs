@@ -1,13 +1,13 @@
-﻿using BlogMaster.Shared.Models;
+﻿using BlogMaster.Models.Entities;
 
 namespace BlogMaster.Services.Interfaces
 {
     public interface IBlogSqlService
     {
-        public Task<List<BlogDto>> GetBlogs();
-        public Task<BlogDto> GetBlog(int id);
-        public Task<bool> CreateBlog(BlogDto dto);
-        public Task<bool> UpdateBlog(BlogDto dto);
-        public Task<bool> DeleteBlog(int id);
+        Task<BlogEntity?> GetBlog(int id);
+        Task<List<BlogEntity>> GetBlogs();
+        Task<BlogEntity?> CreateBlog(BlogEntity blog);
+        Task<BlogEntity?> UpdateBlog(BlogEntity blog);
+        Task<bool> DeleteBlog(int id);
     }
 }

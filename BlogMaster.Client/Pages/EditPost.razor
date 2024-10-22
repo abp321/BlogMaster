@@ -1,56 +1,45 @@
 ﻿@page "/editpost"
 @page "/editpost/{Id:int}"
-@using BlogMaster.Client.Services.Interfaces
-@using BlogMaster.Shared.Models
+@rendermode InteractiveWebAssembly
+@using BlogMaster.Shared.Interfaces
 
 @inject IBlogService blogService
-@inject NavigationManager NavigationManager
+@inject NavigationManager navigationManager
 
-<BlogPostEditor BlogPost="blogPost" OnSave="HandleSave" OnCancel="HandleCancel" />
+<BlogPostEditor @rendermode=InteractiveWebAssembly
+    BlogPost="blogPost"
+    OnSave="HandleSave"
+    OnCancel="HandleCancel" />
 
 @code {
     [Parameter]
     public int? Id { get; set; }
 
-    private BlogDto blogPost = new BlogDto();
+    private BlogDto blogPost = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (Id.HasValue)
         {
-            var existingPost = blogService.GetBlogPost(Id.Value).Result;
-            if (existingPost != null)
+            var existingPost = await blogService.GetBlog(Id.Value);
+            if (existingPost is null)
             {
-                blogPost = new BlogDto
-                {
-                    Id = existingPost.Id,
-                    Title = existingPost.Title,
-                    Content = existingPost.Content,
-                    Author = existingPost.Author,
-                    PublishedDate = existingPost.PublishedDate,
-                    ViewCount = existingPost.ViewCount,
-                    Comments = existingPost.Comments
-                };
+                navigationManager.NavigateTo("/blogs");
+                return;
             }
-            else
-            {
-                NavigationManager.NavigateTo("/");
-            }
+            blogPost = existingPost;
         }
+        await base.OnInitializedAsync();
     }
 
-    void HandleSave(BlogDto updatedPost)
+    async Task HandleSave(BlogDto updatedBlog)
     {
-        if (updatedPost.Id == 0)
-        {
-            updatedPost.PublishedDate = DateTime.Now;
-        }
-        blogService.SaveBlogPost(updatedPost);
-        NavigationManager.NavigateTo("/");
+        await blogService.CreateBlog(updatedBlog);
+        navigationManager.NavigateTo("/blogs");
     }
 
     void HandleCancel()
     {
-        NavigationManager.NavigateTo("/");
+        navigationManager.NavigateTo("/blogs");
     }
 }

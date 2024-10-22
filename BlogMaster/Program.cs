@@ -1,17 +1,31 @@
+using BlogMaster;
+using BlogMaster.Shared.Interfaces;
 using BlogMaster.Components;
+using BlogMaster.Database;
+using BlogMaster.Models;
 using BlogMaster.Services.Implementations;
 using BlogMaster.Services.Interfaces;
 using BlogMaster.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using BlogMaster.Client.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
+
+AppSettings appSettings = new();
+builder.Configuration.GetSection(nameof(AppSettings)).Bind(appSettings);
+appSettings.SqlConnectionString = await Scripts.InitializeSQLiteDatabase();//Use sql connection string from config in production
+
+builder.Services.AddDbContext<BlogDbContext>(options =>
+    options.UseSqlite(appSettings.SqlConnectionString));
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
-builder.Services.AddTransient<IBlogSqlService, BlogSqlService>();
-
+builder.Services.AddScoped<IBlogSqlService, BlogSqlService>();
+builder.Services.AddScoped<IBlogService, BlogService>();
 var app = builder.Build();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging();
@@ -22,34 +36,38 @@ else
     app.UseHsts();
 }
 
-app.MapGet("/api/blogs", async (IBlogSqlService blogService) =>
+app.MapGet("/api/blogs", async (IBlogService blogService) =>
 {
-    var allPosts = await blogService.GetBlogs();
-    return Results.Ok(allPosts);
+    var allBlogs = await blogService.GetBlogs();
+    return Results.Ok(allBlogs);
 });
 
-app.MapGet("/api/blogs/{id}", async (IBlogSqlService blogService, int id) =>
+app.MapGet("/api/blogs/{id}", async (IBlogService blogService, int id) =>
 {
-    var post = await blogService.GetBlog(id);
-    return post is not null ? Results.Ok(post) : Results.NotFound();
+    var blog = await blogService.GetBlog(id);
+    return blog is not null ? Results.Ok(blog) : Results.NotFound();
 });
 
-app.MapPost("/api/blogs", async (IBlogSqlService blogService, [FromBody] BlogDto dto) =>
+app.MapPost("/api/blogs", async (IBlogService blogService, [FromBody] BlogDto dto) =>
 {
-    await blogService.CreateBlog(dto);
-    return Results.Created($"/api/blogs/{dto.Id}", dto);
+    var createdBlog = await blogService.CreateBlog(dto);
+    return createdBlog is not null
+        ? Results.Created($"/api/blogs/{createdBlog.Id}", createdBlog)
+        : Results.BadRequest("Blog creation failed.");
 });
 
-app.MapPut("/api/blogs", async (IBlogSqlService blogService, [FromBody] BlogDto dto) =>
+app.MapPut("/api/blogs", async (IBlogService blogService, [FromBody] BlogDto dto) =>
 {
-    await blogService.UpdateBlog(dto);
-    return Results.NoContent(); // 204 No Content is typical for successful PUT
+    var updatedBlog = await blogService.UpdateBlog(dto);
+    return updatedBlog is not null
+        ? Results.Ok(updatedBlog)
+        : Results.NotFound("Blog not found or update failed.");
 });
 
-app.MapDelete("/api/blogs/{id}", async (IBlogSqlService blogService, int id) =>
+app.MapDelete("/api/blogs/{id}", async (IBlogService blogService, int id) =>
 {
-    var result = await blogService.DeleteBlog(id);
-    return result ? Results.NoContent() : Results.NotFound();
+    var deleted = await blogService.DeleteBlog(id);
+    return deleted ? Results.NoContent() : Results.NotFound();
 });
 
 app.UseHttpsRedirection();

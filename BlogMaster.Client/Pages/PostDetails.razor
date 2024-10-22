@@ -1,44 +1,50 @@
 ﻿@page "/postdetails/{Id:int}"
-@using BlogMaster.Client.Services.Interfaces
+@using BlogMaster.Shared.Interfaces
 @using BlogMaster.Shared.Models
 
 @inject IBlogService blogService
 @inject NavigationManager navigationManager
 
-@if (blogPost == null)
+@if (blog is null)
 {
     <p>Loading...</p>
 }
 else
 {
-    <BlogPostDetailsContent BlogPost="blogPost" OnBack="GoBack" OnCommentAdded="HandleCommentAdded" />
+    <BlogPostDetailsContent @rendermode=InteractiveWebAssembly BlogPost="blog" OnBack="GoBack" OnCommentAdded="HandleCommentAdded" />
 }
 
 @code {
     [Parameter]
     public int Id { get; set; }
 
-    private BlogDto blogPost;
+    private BlogDto blog = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        blogPost = blogService.GetBlogPost(Id).Result;
-        if (blogPost == null)
+        var existingBlog = await blogService.GetBlog(Id);
+        if (existingBlog is null)
         {
-            // Handle the case where the blog post is not found
-            navigationManager.NavigateTo("/");
+            navigationManager.NavigateTo("/blogs");
+            return;
         }
+
+        blog = existingBlog;
+        await base.OnInitializedAsync();
     }
 
     void GoBack()
     {
-        navigationManager.NavigateTo("/");
+        navigationManager.NavigateTo("/blogs");
     }
 
-    void HandleCommentAdded(CommentDto comment)
+    async Task HandleCommentAdded(CommentDto comment)
     {
-        blogService.AddComment(blogPost.Id, comment);
-        // Refresh the blog post to get updated comments
-        blogPost = blogService.GetBlogPost(Id).Result;
+        blog.AddComment(comment);
+        var updatedBlog = await blogService.UpdateBlog(blog);
+        if(updatedBlog is not null)
+        {
+            blog = updatedBlog;
+        }
     }
 }

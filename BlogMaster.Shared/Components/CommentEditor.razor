@@ -14,15 +14,15 @@
     [Parameter]
     public EventCallback<CommentDto> OnCommentSubmitted { get; set; }
 
-    private CommentDto comment = new CommentDto();
+    private CommentDto comment = new();
 
     void SubmitComment()
     {
         if (!string.IsNullOrWhiteSpace(comment.Author) && !string.IsNullOrWhiteSpace(comment.Content))
         {
-            comment.PostedDate = DateTime.Now;
+            comment.PostedDate = DateTime.UtcNow;
             OnCommentSubmitted.InvokeAsync(comment);
-            comment = new CommentDto();  // Reset the form
+            comment = new CommentDto();
         }
     }
 }
