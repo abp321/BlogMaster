@@ -1,4 +1,5 @@
 ﻿@using BlogMaster.Shared.Models
+@using System.Globalization
 
 @if(BlogPost is null)
 {
@@ -6,38 +7,52 @@
 }
 else
 {
-    <h1>@BlogPost.Title</h1>
-    <p>
-        <strong>
-            By @BlogPost.Author on @BlogPost.PublishedDate.ToString("MM/dd/yyyy")
-        </strong>
-    </p>
-    <p>@BlogPost.Content</p>
-    <p><em>Views: @BlogPost.ViewCount</em></p>
+    <div class="container my-5">
+        <div class="mb-4">
+            <h1 class="display-4">@BlogPost.Title</h1>
+            <p class="text-muted">
+                By <strong>@BlogPost.Author</strong> on @BlogPost.PublishedDate.ToString("MMMM dd, yyyy", CultureInfo.InvariantCulture)
+            </p>
+            <p class="lead"><em>Views: @BlogPost.ViewCount</em></p>
+        </div>
 
-    <hr />
+        <div class="mb-5">
+            <p>@BlogPost.Content</p>
+        </div>
 
-    <h3>Comments</h3>
-    @if (BlogPost.Comments.Any())
-    {
-        <ul class="list-group">
-            @foreach (var comment in BlogPost.Comments.OrderByDescending(c => c.PostedDate))
+        <hr />
+
+        <div class="mt-5">
+            <h3>Comments</h3>
+            @if (BlogPost.Comments.Any())
             {
-                <li class="list-group-item">
-                    <strong>@comment.Author</strong> on @comment.PostedDate.ToString("MM/dd/yyyy HH:mm")
-                    <p>@comment.Content</p>
-                </li>
+                <ul class="list-group list-group-flush">
+                    @foreach (var comment in BlogPost.Comments.OrderByDescending(c => c.PostedDate))
+                    {
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <strong>@comment.Author</strong>
+                                <small class="text-muted">@comment.PostedDate.ToString("MMMM dd, yyyy HH:mm", CultureInfo.InvariantCulture)</small>
+                            </div>
+                            <p class="mt-2">@comment.Content</p>
+                        </li>
+                    }
+                </ul>
             }
-        </ul>
-    }
-    else
-    {
-        <p>No comments yet.</p>
-    }
+            else
+            {
+                <div class="alert alert-info">No comments yet. Be the first to comment!</div>
+            }
+        </div>
 
-    <CommentEditor OnCommentSubmitted="OnCommentSubmitted" />
+        <div class="mt-5">
+            <CommentEditor OnCommentSubmitted="OnCommentSubmitted" />
+        </div>
 
-    <button class="btn btn-secondary mt-3" @onclick="OnBackClicked">Back to Posts</button>
+        <button class="btn btn-secondary mt-4" @onclick="OnBackClicked">
+            <i class="bi bi-arrow-left me-2"></i>Back to Posts
+        </button>
+    </div>
 }
 
 @code {
@@ -50,17 +65,18 @@ else
     [Parameter]
     public EventCallback<CommentDto> OnCommentAdded { get; set; }
 
-    async Task OnBackClicked()
+    Task OnBackClicked()
     {
-        await OnBack.InvokeAsync(null);
+        return OnBack.InvokeAsync(null);
     }
 
-    async Task OnCommentSubmitted(CommentDto comment)
+    Task OnCommentSubmitted(CommentDto comment)
     {
         if (BlogPost is not null)
         {
             comment.BlogPostId = BlogPost.Id;
-            await OnCommentAdded.InvokeAsync(comment);
+            return OnCommentAdded.InvokeAsync(comment);
         }
+        return Task.CompletedTask;
     }
 }

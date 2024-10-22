@@ -1,25 +1,33 @@
 ﻿@page "/editpost"
 @page "/editpost/{Id:int}"
-@rendermode InteractiveWebAssembly
+@rendermode InteractiveServer
 @using BlogMaster.Shared.Interfaces
 
 @inject IBlogService blogService
 @inject NavigationManager navigationManager
+@inject PersistentComponentState applicationState
+@implements IDisposable
 
-<BlogPostEditor @rendermode=InteractiveWebAssembly
-    BlogPost="blogPost"
-    OnSave="HandleSave"
-    OnCancel="HandleCancel" />
+<BlogPostEditor BlogPost="blogPost"
+                OnSave="HandleSave"
+                OnUpdate="HandleUpdate"
+                OnCancel="HandleCancel" />
 
 @code {
     [Parameter]
     public int? Id { get; set; }
 
     private BlogDto blogPost = new();
+    private PersistingComponentStateSubscription? _subscription;
 
     protected override async Task OnInitializedAsync()
     {
-        if (Id.HasValue)
+        _subscription = applicationState.RegisterOnPersisting(PersistBlogPost);
+        if (Id.HasValue && applicationState.TryTakeFromJson<BlogDto>($"BlogPost_{Id}", out BlogDto? persistedBlogPost))
+        {
+            blogPost = persistedBlogPost!;
+        }
+        else if (Id.HasValue)
         {
             var existingPost = await blogService.GetBlog(Id.Value);
             if (existingPost is null)
@@ -32,14 +40,31 @@
         await base.OnInitializedAsync();
     }
 
+    private Task PersistBlogPost()
+    {
+        applicationState.PersistAsJson($"BlogPost_{Id}", blogPost);
+        return Task.CompletedTask;
+    }
+
     async Task HandleSave(BlogDto updatedBlog)
     {
         await blogService.CreateBlog(updatedBlog);
         navigationManager.NavigateTo("/blogs");
     }
 
+    async Task HandleUpdate(BlogDto updatedBlog)
+    {
+        await blogService.UpdateBlog(updatedBlog);
+        navigationManager.NavigateTo("/blogs");
+    }
+
     void HandleCancel()
     {
         navigationManager.NavigateTo("/blogs");
+    }
+
+    public void Dispose()
+    {
+        _subscription?.Dispose();
     }
 }

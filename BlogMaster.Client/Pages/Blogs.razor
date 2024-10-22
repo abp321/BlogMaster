@@ -1,34 +1,82 @@
 ﻿@page "/blogs"
-@rendermode InteractiveWebAssembly
+@rendermode InteractiveAuto
 @using BlogMaster.Shared.Interfaces
 @using BlogMaster.Shared.Models
+@using System.Globalization
 @inject IBlogService blogService
 @inject NavigationManager navigationManager
+@inject PersistentComponentState applicationState
+@implements IDisposable
 
-<h1>Blog Posts</h1>
+<h1 class="mb-4">Blog Posts</h1>
 
-<button class="btn btn-primary" @onclick="CreateNewPost">Create New Post</button>
+<button class="btn btn-primary mb-4" @onclick="CreateNewPost">
+    <i class="bi bi-plus-circle me-2"></i>Create New Post
+</button>
 
-<ul class="list-group mt-3">
-    @foreach (var post in blogs)
-    {
-        <li class="list-group-item">
-            <h3>@post.Title</h3>
-            <p>By @post.Author on @post.PublishedDate.ToString("MM/dd/yyyy") | Views: @post.ViewCount</p>
-            <button class="btn btn-link btn-sm" @onclick="() => ViewPost(post.Id)">View Details</button>
-            <button class="btn btn-secondary btn-sm" @onclick="() => EditPost(post.Id)">Edit</button>
-            <button class="btn btn-danger btn-sm" @onclick="async () => await DeletePost(post.Id)">Delete</button>
-        </li>
-    }
-</ul>
+@if (!blogs.Any())
+{
+    <div class="alert alert-info">No blog posts available.</div>
+}
+else
+{
+    <div class="row g-4" style="max-width:400px;">
+        @foreach (var post in blogs)
+        {
+            <div class="col-12">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">@post.Title</h5>
+                        <p class="card-text text-muted mb-2">
+                            By <strong>@post.Author</strong> on @post.PublishedDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+                        </p>
+                        <p class="card-text mb-4">
+                            <i class="bi bi-chat-dots me-1"></i>@post.Comments.Count
+                            <span class="ms-3"><i class="bi bi-eye me-1"></i>@post.ViewCount</span>
+                        </p>
+                        <div class="mt-auto">
+                            <button class="btn btn-outline-primary btn-sm me-2" @onclick="() => ViewPost(post.Id)">
+                                <i class="bi bi-eye"></i> View
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm me-2" @onclick="() => EditPost(post.Id)">
+                                <i class="bi bi-pencil"></i> Edit
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" @onclick="async () => await DeletePost(post.Id)">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+
 
 @code {
     List<BlogDto> blogs = [];
+    private PersistingComponentStateSubscription? _subscription;
 
     protected override async Task OnInitializedAsync()
     {
-        blogs = await blogService.GetBlogs() ?? [];
+        _subscription = applicationState.RegisterOnPersisting(PersistBlogs);
+        if (applicationState.TryTakeFromJson<List<BlogDto>>("BlogsKey", out List<BlogDto>? persistedBlogs))
+        {
+            blogs = persistedBlogs!;
+        }
+        else
+        {
+            blogs = await blogService.GetBlogs() ?? [];
+        }
+
         await base.OnInitializedAsync();
+    }
+
+    private Task PersistBlogs()
+    {
+        applicationState.PersistAsJson("BlogsKey", blogs);
+        return Task.CompletedTask;
     }
 
     void CreateNewPost()
@@ -49,6 +97,12 @@
     async Task DeletePost(int id)
     {
         await blogService.DeleteBlog(id);
+        blogs.RemoveAll(b => b.Id == id);
         await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        _subscription?.Dispose();
     }
 }

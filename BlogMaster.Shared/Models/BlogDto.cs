@@ -10,6 +10,10 @@
         public int ViewCount { get; set; }
         public List<CommentDto> Comments { get; set; } = [];
 
-        public void AddComment(CommentDto comment) => Comments.Add(comment);
+        public void AddComment(CommentDto comment)
+        {
+            comment.PostedDate = DateTime.UtcNow;
+            Comments.Add(comment);
+        }
     }
 }

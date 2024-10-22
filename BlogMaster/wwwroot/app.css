@@ -49,3 +49,12 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+.form-control:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+textarea.form-control {
+    resize: none;
+}

@@ -1,41 +1,85 @@
 ﻿@using BlogMaster.Shared.Models
-<div class="form-group">
-    <label>Title</label>
-    <input class="form-control" @bind="BlogPost!.Title" />
-</div>
-<div class="form-group">
-    <label>Content</label>
-    <textarea class="form-control" @bind="BlogPost.Content"></textarea>
-</div>
-@if (IsNewPost)
-{
-    <div class="form-group">
-        <label>Author</label>
-        <input class="form-control" @bind="BlogPost.Author" />
+
+<div class="card mt-5">
+    <div class="card-header">
+        <h3 class="mb-0">@((IsNewPost ? "Create New Post" : "Edit Post"))</h3>
     </div>
-}
-<button class="btn btn-success" @onclick="OnSaveClicked">Save</button>
-<button class="btn btn-secondary" @onclick="OnCancelClicked">Cancel</button>
+    <div class="card-body">
+        <div class="mb-3">
+            <label for="postTitle" class="form-label">Title</label>
+            <input
+                type="text"
+                class="form-control"
+                id="postTitle"
+                @bind="BlogPost.Title"
+                placeholder="Enter post title"
+            />
+        </div>
+
+        <div class="mb-3">
+            <label for="postContent" class="form-label">Content</label>
+            <textarea
+                class="form-control"
+                id="postContent"
+                @bind="BlogPost.Content"
+                rows="6"
+                placeholder="Write your post content here"
+            ></textarea>
+        </div>
+
+        @if (IsNewPost)
+        {
+            <div class="mb-3">
+                <label for="postAuthor" class="form-label">Author</label>
+                <input
+                    type="text"
+                    class="form-control"
+                    id="postAuthor"
+                    @bind="BlogPost.Author"
+                    placeholder="Enter author name"
+                />
+            </div>
+        }
+
+        <div class="d-flex justify-content-end">
+            <button type="button" class="btn btn-secondary me-2" @onclick="OnCancelClicked">
+                <i class="bi bi-x-circle me-1"></i>Cancel
+            </button>
+            <button type="button" class="btn btn-success" @onclick="OnSaveClicked">
+                <i class="bi bi-save me-1"></i>Save
+            </button>
+        </div>
+    </div>
+</div>
 
 @code {
     [Parameter]
-    public BlogDto? BlogPost { get; set; }
+    public BlogDto BlogPost { get; set; } = new();
 
     [Parameter]
     public EventCallback<BlogDto> OnSave { get; set; }
 
     [Parameter]
+    public EventCallback<BlogDto> OnUpdate { get; set; }
+
+    [Parameter]
     public EventCallback OnCancel { get; set; }
 
-    bool IsNewPost => BlogPost?.Id == 0;
+    private bool IsNewPost => BlogPost.Id == 0;
 
-    async Task OnSaveClicked()
+    private async Task OnSaveClicked()
     {
-        await OnSave.InvokeAsync(BlogPost);
+        if(IsNewPost)
+        {
+            await OnSave.InvokeAsync(BlogPost);
+            return;
+        }
+
+        await OnUpdate.InvokeAsync(BlogPost);
     }
 
-    async Task OnCancelClicked()
+    private async Task OnCancelClicked()
     {
-        await OnCancel.InvokeAsync(null);
+        await OnCancel.InvokeAsync();
     }
 }

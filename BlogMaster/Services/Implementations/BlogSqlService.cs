@@ -80,10 +80,8 @@ namespace BlogMaster.Services.Implementations
 
         private void UpdateComments(BlogEntity existingBlog, List<CommentEntity> updatedComments)
         {
-            var existingCommentIds = existingBlog.Comments.Select(c => c.Id).ToList();
-            var updatedCommentIds = updatedComments.Select(c => c.Id).ToList();
-
-            var commentsToRemove = existingBlog.Comments.Where(c => !updatedCommentIds.Contains(c.Id)).ToList();
+            var updatedCommentIds = updatedComments.Select(c => c.Id).ToHashSet();
+            var commentsToRemove = existingBlog.Comments.Where(c => !updatedCommentIds.Contains(c.Id));
             context.Comments.RemoveRange(commentsToRemove);
             foreach (var updatedComment in updatedComments)
             {

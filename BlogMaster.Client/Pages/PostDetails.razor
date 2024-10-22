@@ -1,36 +1,61 @@
 ﻿@page "/postdetails/{Id:int}"
+@rendermode InteractiveServer
 @using BlogMaster.Shared.Interfaces
 @using BlogMaster.Shared.Models
 
 @inject IBlogService blogService
 @inject NavigationManager navigationManager
+@inject PersistentComponentState applicationState
+@implements IDisposable
 
-@if (blog is null)
+@if (blogPost is null)
 {
     <p>Loading...</p>
 }
 else
 {
-    <BlogPostDetailsContent @rendermode=InteractiveWebAssembly BlogPost="blog" OnBack="GoBack" OnCommentAdded="HandleCommentAdded" />
+    <BlogPostDetailsContent BlogPost="blogPost" OnBack="GoBack" OnCommentAdded="HandleCommentAdded" />
 }
 
 @code {
     [Parameter]
     public int Id { get; set; }
 
-    private BlogDto blog = new();
+    private BlogDto blogPost = new();
+    private PersistingComponentStateSubscription? _subscription;
+    private TaskCompletionSource initializeCompletion = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     protected override async Task OnInitializedAsync()
     {
-        var existingBlog = await blogService.GetBlog(Id);
-        if (existingBlog is null)
+        _subscription = applicationState.RegisterOnPersisting(PersistBlogPost);
+        if (applicationState.TryTakeFromJson<BlogDto>($"BlogPost_{Id}", out BlogDto? persistedBlogPost))
         {
-            navigationManager.NavigateTo("/blogs");
-            return;
+            blogPost = persistedBlogPost!;
+        }
+        else
+        {
+            var existingBlog = await blogService.GetBlog(Id);
+            if (existingBlog is null)
+            {
+                navigationManager.NavigateTo("/blogs");
+                return;
+            }
+
+            blogPost = existingBlog;
         }
 
-        blog = existingBlog;
+        initializeCompletion.SetResult();
         await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await initializeCompletion.Task;
+            await IncrementView();
+        }
+        await base.OnAfterRenderAsync(firstRender);
     }
 
     void GoBack()
@@ -40,11 +65,28 @@ else
 
     async Task HandleCommentAdded(CommentDto comment)
     {
-        blog.AddComment(comment);
-        var updatedBlog = await blogService.UpdateBlog(blog);
-        if(updatedBlog is not null)
+        blogPost.AddComment(comment);
+        var updatedBlog = await blogService.UpdateBlog(blogPost);
+        if (updatedBlog is not null)
         {
-            blog = updatedBlog;
+            blogPost = updatedBlog;
         }
+    }
+
+    async Task IncrementView()
+    {
+        blogPost.ViewCount++;
+        await blogService.UpdateBlog(blogPost);
+    }
+
+    private Task PersistBlogPost()
+    {
+        applicationState.PersistAsJson($"BlogPost_{Id}", blogPost);
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        _subscription?.Dispose();
     }
 }

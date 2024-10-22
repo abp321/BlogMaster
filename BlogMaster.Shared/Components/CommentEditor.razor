@@ -1,14 +1,36 @@
 ﻿@using BlogMaster.Shared.Models
-<h4>Add a Comment</h4>
-<div class="form-group">
-    <label>Your Name</label>
-    <input class="form-control" @bind="comment.Author" />
+<div class="card mt-5">
+    <div class="card-header">
+        <h4 class="mb-0">Add a Comment</h4>
+    </div>
+    <div class="card-body">
+            <div class="mb-3">
+                <label for="authorName" class="form-label">Your Name</label>
+                <input
+                    type="text"
+                    class="form-control"
+                    id="authorName"
+                    @bind="comment.Author"
+                    placeholder="Enter your name"
+                />
+            </div>
+
+            <div class="mb-3">
+                <label for="commentContent" class="form-label">Comment</label>
+                <textarea
+                    class="form-control"
+                    id="commentContent"
+                    @bind="comment.Content"
+                    rows="4"
+                    placeholder="Write your comment here"
+                ></textarea>
+            </div>
+
+            <button @onclick="SubmitComment" class="btn btn-primary">
+                <i class="bi bi-send-fill me-2"></i>Submit
+            </button>
+    </div>
 </div>
-<div class="form-group">
-    <label>Comment</label>
-    <textarea class="form-control" @bind="comment.Content"></textarea>
-</div>
-<button class="btn btn-primary" @onclick="SubmitComment">Submit</button>
 
 @code {
     [Parameter]
@@ -16,12 +38,11 @@
 
     private CommentDto comment = new();
 
-    void SubmitComment()
+    async Task SubmitComment()
     {
         if (!string.IsNullOrWhiteSpace(comment.Author) && !string.IsNullOrWhiteSpace(comment.Content))
         {
-            comment.PostedDate = DateTime.UtcNow;
-            OnCommentSubmitted.InvokeAsync(comment);
+            await OnCommentSubmitted.InvokeAsync(comment);
             comment = new CommentDto();
         }
     }
