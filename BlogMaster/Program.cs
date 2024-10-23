@@ -8,7 +8,7 @@ using BlogMaster.Services.Interfaces;
 using BlogMaster.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using BlogMaster.Client.Services.Implementations;
+using BlogMaster.Shared.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +24,8 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 builder.Services.AddScoped<IBlogSqlService, BlogSqlService>();
 builder.Services.AddScoped<IBlogService, BlogService>();
+builder.Services.AddScoped<IWebAssemblyStateCacheService<BlogDto>, WebAssemblyStateCacheService<BlogDto>>();
+builder.Services.AddScoped<IWebAssemblyStateCacheService<List<BlogDto>>, WebAssemblyStateCacheService<List<BlogDto>>>();
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

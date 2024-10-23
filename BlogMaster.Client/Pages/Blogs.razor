@@ -6,6 +6,7 @@
 @inject IBlogService blogService
 @inject NavigationManager navigationManager
 @inject PersistentComponentState applicationState
+@inject IWebAssemblyStateCacheService<List<BlogDto>> stateCacheService
 @implements IDisposable
 
 <h1 class="mb-4">Blog Posts</h1>
@@ -14,7 +15,7 @@
     <i class="bi bi-plus-circle me-2"></i>Create New Post
 </button>
 
-@if (!blogs.Any())
+@if (blogs is null)
 {
     <div class="alert alert-info">No blog posts available.</div>
 }
@@ -55,22 +56,47 @@ else
 
 
 @code {
-    List<BlogDto> blogs = [];
+    List<BlogDto>? blogs = [];
     private PersistingComponentStateSubscription? _subscription;
 
     protected override async Task OnInitializedAsync()
     {
         _subscription = applicationState.RegisterOnPersisting(PersistBlogs);
-        if (applicationState.TryTakeFromJson<List<BlogDto>>("BlogsKey", out List<BlogDto>? persistedBlogs))
-        {
-            blogs = persistedBlogs!;
-        }
-        else
-        {
-            blogs = await blogService.GetBlogs() ?? [];
-        }
+        TryGetState("BlogsKey");
+        var newBlogs = await blogService.GetBlogs();
+        UpdateBlogList(newBlogs);
 
         await base.OnInitializedAsync();
+    }
+
+    void UpdateBlogList(List<BlogDto>? newBlogs)
+    {
+        if (blogs is null)
+        {
+            blogs = newBlogs ?? [];
+            stateCacheService.SetItem("BlogsKey", blogs);
+            return;
+        }
+
+        if (newBlogs is null)
+        {
+            blogs.Clear();
+            stateCacheService.SetItem("BlogsKey", blogs);
+            return;
+        }
+
+        if (!newBlogs.SequenceEqual(blogs))
+        {
+            blogs.Clear();
+            blogs.AddRange(newBlogs);
+            stateCacheService.SetItem("BlogsKey", blogs);
+        }
+    }
+
+    bool TryGetState(string cacheKey)
+    {
+        return !applicationState.TryTakeFromJson(cacheKey, out blogs) &&
+            !stateCacheService.TryGetItem(cacheKey, out blogs);
     }
 
     private Task PersistBlogs()

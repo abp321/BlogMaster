@@ -4,31 +4,33 @@
         <h4 class="mb-0">Add a Comment</h4>
     </div>
     <div class="card-body">
-            <div class="mb-3">
-                <label for="authorName" class="form-label">Your Name</label>
-                <input
-                    type="text"
-                    class="form-control"
-                    id="authorName"
-                    @bind="comment.Author"
-                    placeholder="Enter your name"
-                />
-            </div>
+        <div class="mb-3">
+            <label for="authorName" class="form-label">Your Name</label>
+            <input
+                type="text"
+                class="form-control"
+                id="authorName"
+                @bind="comment.Author"
+                placeholder="Enter your name"
+                maxlength="30"
+            />
+        </div>
 
-            <div class="mb-3">
-                <label for="commentContent" class="form-label">Comment</label>
-                <textarea
-                    class="form-control"
-                    id="commentContent"
-                    @bind="comment.Content"
-                    rows="4"
-                    placeholder="Write your comment here"
-                ></textarea>
-            </div>
+        <div class="mb-3">
+            <label for="commentContent" class="form-label">Comment</label>
+            <textarea
+                class="form-control"
+                id="commentContent"
+                @bind="comment.Content"
+                rows="4"
+                placeholder="Write your comment here"
+                maxlength="500"
+            ></textarea>
+        </div>
 
-            <button @onclick="SubmitComment" class="btn btn-primary">
-                <i class="bi bi-send-fill me-2"></i>Submit
-            </button>
+        <button @onclick="SubmitComment" class="btn btn-primary">
+            <i class="bi bi-send-fill me-2"></i>Submit
+        </button>
     </div>
 </div>
 

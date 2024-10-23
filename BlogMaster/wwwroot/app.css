@@ -58,3 +58,8 @@ h1:focus {
 textarea.form-control {
     resize: none;
 }
+
+.preserve-linebreaks {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}

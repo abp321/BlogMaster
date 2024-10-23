@@ -13,6 +13,7 @@
                 id="postTitle"
                 @bind="BlogPost.Title"
                 placeholder="Enter post title"
+                maxlength="100"
             />
         </div>
 
@@ -24,7 +25,8 @@
                 @bind="BlogPost.Content"
                 rows="6"
                 placeholder="Write your post content here"
-            ></textarea>
+                maxlength="20000">
+            </textarea>
         </div>
 
         @if (IsNewPost)

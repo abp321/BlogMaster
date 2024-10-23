@@ -34,7 +34,7 @@ else
                                 <strong>@comment.Author</strong>
                                 <small class="text-muted">@comment.PostedDate.ToString("MMMM dd, yyyy HH:mm", CultureInfo.InvariantCulture)</small>
                             </div>
-                            <p class="mt-2">@comment.Content</p>
+                            <p class="mt-2 preserve-linebreaks">@comment.Content</p>
                         </li>
                     }
                 </ul>
