@@ -7,7 +7,7 @@ namespace BlogMaster.Middleware
     {
         private const string redirectPath = "/redirects.html";
         private const string limitCheckApi = "/api/blogs/limited";
-        private static readonly ClientRateLimiter rateLimiter = new(30);
+        private static readonly ClientRateLimiter rateLimiter = new(100);
 
         public Task InvokeAsync(HttpContext context)
         {
