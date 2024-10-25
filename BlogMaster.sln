@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlogMaster", "BlogMaster\BlogMaster.csproj", "{5358383A-67F7-4237-A635-1B8571D7A2BD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlogMaster", "BlogMaster\BlogMaster.csproj", "{5358383A-67F7-4237-A635-1B8571D7A2BD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlogMaster.Client", "BlogMaster.Client\BlogMaster.Client.csproj", "{AB28406F-F7DC-4340-B4A7-B5E52D37CB3C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlogMaster.Client", "BlogMaster.Client\BlogMaster.Client.csproj", "{AB28406F-F7DC-4340-B4A7-B5E52D37CB3C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlogMaster.Shared", "BlogMaster.Shared\BlogMaster.Shared.csproj", "{E3B4AA24-DEE1-4788-8D1F-56D7B6324F63}"
 EndProject

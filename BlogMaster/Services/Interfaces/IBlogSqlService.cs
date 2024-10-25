@@ -9,5 +9,6 @@ namespace BlogMaster.Services.Interfaces
         Task<BlogEntity?> CreateBlog(BlogEntity blog);
         Task<BlogEntity?> UpdateBlog(BlogEntity blog);
         Task<bool> DeleteBlog(int id);
+        IAsyncEnumerable<VisitorEntity> GetVisitors();
     }
 }

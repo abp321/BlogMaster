@@ -7,6 +7,7 @@ namespace BlogMaster.Database
     {
         public DbSet<BlogEntity> Blogs { get; set; }
         public DbSet<CommentEntity> Comments { get; set; }
+        public DbSet<VisitorEntity> Visitors { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

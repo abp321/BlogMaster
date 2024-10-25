@@ -21,6 +21,6 @@ namespace BlogMaster.Models.Entities
         [ForeignKey("Blog")]
         public int BlogPostId { get; set; }
 
-        public BlogEntity Blog { get; set; }
+        public BlogEntity Blog { get; set; } = new();
     }
 }

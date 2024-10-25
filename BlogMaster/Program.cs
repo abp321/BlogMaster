@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using System.IO.Compression;
 using Microsoft.AspNetCore.Mvc;
+using BlogMaster.Middleware;
+using BlogMaster.Utility;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 AppSettings appSettings = await InitializeAppSettings(builder);
@@ -81,6 +84,7 @@ void ConfigureMiddleware(WebApplication app)
         app.UseHsts();
     }
 
+    app.UseMiddleware<CustomMiddleware>();
     app.UseHttpsRedirection();
     app.UseResponseCompression();
     app.UseStaticFiles(new StaticFileOptions
@@ -129,6 +133,35 @@ void ConfigureEndpoints(WebApplication app)
         var deleted = await blogService.DeleteBlog(id);
         return deleted ? Results.NoContent() : Results.NotFound();
     });
+
+    app.MapGet("/api/blogs/limited", (HttpContext context) =>
+    {
+        bool limited = ClientRateLimiter.IsLimitReached(context);
+        return limited ? Results.NoContent() : Results.Ok();
+    });
+
+    app.MapGet("/api/blogs/visitors", async (HttpContext context, IBlogSqlService blogSqlService) =>
+    {
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync("[");
+
+        bool firstItem = true;
+
+        await foreach (var visitor in blogSqlService.GetVisitors())
+        {
+            if (!firstItem)
+            {
+                await context.Response.WriteAsync(",");
+            }
+            else
+            {
+                firstItem = false;
+            }
+            await JsonSerializer.SerializeAsync(context.Response.Body, visitor);
+        }
+        await context.Response.WriteAsync("]");
+    });
+
 
     app.MapRazorComponents<App>()
         .AddInteractiveServerRenderMode()

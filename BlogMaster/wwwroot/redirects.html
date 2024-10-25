@@ -1,0 +1,24 @@
+﻿<!DOCTYPE html>
+<html>
+<body>
+    <h5>Wait...</h5>
+    <script>
+        document.addEventListener("DOMContentLoaded", async function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const value = urlParams.get("value") ?? "blogs";
+
+            while (true) {
+                const { status } = await fetch('/api/blogs/limited')
+                if (status === 200) break;
+
+                await sleep(1000);
+            }
+            window.location.href = value;
+        });
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms))
+        }
+    </script>
+</body>
+</html>

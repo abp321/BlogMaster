@@ -17,7 +17,24 @@ namespace BlogMaster.Services.Implementations
         public async Task<List<BlogEntity>> GetBlogs()
         {
             return await context.Blogs
-                .Include(b => b.Comments)
+                .Select(b => new BlogEntity
+                {
+                    Id = b.Id,
+                    Title = b.Title,
+                    Content = string.Empty,
+                    ViewCount = b.ViewCount,
+                    Author = b.Author,
+                    PublishedDate = b.PublishedDate,
+                    Comments = b.Comments.Select(c => new CommentEntity
+                    {
+                        Id = c.Id,
+                        Author = c.Author,
+                        Content = string.Empty,
+                        PostedDate = c.PostedDate,
+                        BlogPostId = c.BlogPostId
+                    }).ToList()
+
+                })
                 .ToListAsync();
         }
 
@@ -76,6 +93,11 @@ namespace BlogMaster.Services.Implementations
             {
                 return false;
             }
+        }
+
+        public IAsyncEnumerable<VisitorEntity> GetVisitors()
+        {
+            return context.Visitors.AsAsyncEnumerable();
         }
 
         private void UpdateComments(BlogEntity existingBlog, List<CommentEntity> updatedComments)
