@@ -16,17 +16,9 @@ namespace BlogMaster.Services.Implementations
 
         public async Task<List<BlogEntity>> GetBlogs()
         {
-            List<BlogEntity> result = [];
-            await foreach(var n in context.Blogs.Include(b => b.Comments).AsAsyncEnumerable())
-            {
-                List<CommentEntity> emptyComments = [];
-                foreach (var comment in n.Comments) emptyComments.Add(new());
-
-                n.Comments = emptyComments;
-                n.Content = string.Empty;
-                result.Add(n);
-            }
-            return result;
+            return await context.Blogs
+                .Include(b => b.Comments)
+                .ToListAsync();
         }
 
         public async Task<BlogEntity?> CreateBlog(BlogEntity blogEntity)
