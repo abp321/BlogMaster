@@ -7,8 +7,7 @@ namespace BlogMaster.Middleware
     {
         private const string redirectPath = "/redirects.html";
         private const string limitCheckApi = "/api/blogs/limited";
-        private static readonly ClientRateLimiter rateLimiter = new(15);
-        private static readonly SimpleTaskSceduler s_scheduler = new();
+        private static readonly ClientRateLimiter rateLimiter = new(30);
 
         public Task InvokeAsync(HttpContext context)
         {
@@ -18,7 +17,7 @@ namespace BlogMaster.Middleware
 
             if (!path.Contains('.') && !path.Contains("api"))
             {
-                s_scheduler.Schedule(() => Scripts.LogVisitor(currentIp, serviceProvider));
+                Scripts.LogVisitor(currentIp, serviceProvider);
             }
 
             if (rateLimiter.IsLimitReached(currentIp))
