@@ -49,23 +49,29 @@ namespace BlogMaster
             });
         }
 
+
         private static void InitializeTableIfMissing(BlogDbContext context)
         {
-            const string tableExistsQuery = $"SELECT name FROM sqlite_master WHERE type='table' AND name='Visitors';";
+            const string tableExistsQuery = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='Visitors';";
 
-            bool tableExists = context.Database.ExecuteSqlRaw(tableExistsQuery) > 0;
+            using var command = context.Database.GetDbConnection().CreateCommand();
+            command.CommandText = tableExistsQuery;
+            context.Database.OpenConnection();
 
-            if (!tableExists)
+            int tableCount = Convert.ToInt32(command.ExecuteScalar());
+
+            if (tableCount == 0)
             {
-                var createTableQuery = @"
-            CREATE TABLE Visitors (
-                IpAddress TEXT PRIMARY KEY NOT NULL,
-                LastVisit DATETIME NOT NULL,
-                VisitCount INTEGER NOT NULL
-            );";
+                const string createTableQuery = @"
+        CREATE TABLE Visitors (
+            IpAddress TEXT PRIMARY KEY NOT NULL,
+            LastVisit DATETIME NOT NULL,
+            VisitCount INTEGER NOT NULL
+        );";
 
                 context.Database.ExecuteSqlRaw(createTableQuery);
             }
         }
+
     }
 }
