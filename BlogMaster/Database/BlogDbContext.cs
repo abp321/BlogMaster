@@ -1,4 +1,5 @@
-﻿using BlogMaster.Models.Entities;
+﻿using BlogMaster.Client.Utility;
+using BlogMaster.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace BlogMaster.Database
@@ -16,6 +17,16 @@ namespace BlogMaster.Database
                 .WithMany(b => b.Comments)
                 .HasForeignKey(c => c.BlogPostId)
                 .OnDelete(DeleteBehavior.Cascade);
+        }
+
+        public override int SaveChanges()
+        {
+            return BackgroundTask.Factory.StartNew(base.SaveChanges).Result;
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.Factory.StartNew(() => base.SaveChangesAsync(cancellationToken), cancellationToken).Unwrap();
         }
     }
 }

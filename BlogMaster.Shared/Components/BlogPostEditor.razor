@@ -1,4 +1,5 @@
 ﻿@using BlogMaster.Shared.Models
+@using Microsoft.JSInterop
 
 <div class="card mt-5">
     <div class="card-header">
@@ -7,25 +8,23 @@
     <div class="card-body">
         <div class="mb-3">
             <label for="postTitle" class="form-label">Title</label>
-            <input
-                type="text"
-                class="form-control"
-                id="postTitle"
-                @bind="BlogPost.Title"
-                placeholder="Enter post title"
-                maxlength="100"
-            />
+            <input type="text"
+                   class="form-control"
+                   id="postTitle"
+                   @bind="BlogPost.Title"
+                   placeholder="Enter post title"
+                   maxlength="100" 
+                   @ref="authorNameInput" />
         </div>
 
         <div class="mb-3">
             <label for="postContent" class="form-label">Content</label>
-            <textarea
-                class="form-control"
-                id="postContent"
-                @bind="BlogPost.Content"
-                rows="6"
-                placeholder="Write your post content here"
-                maxlength="20000">
+            <textarea class="form-control"
+                      id="postContent"
+                      @bind="BlogPost.Content"
+                      rows="6"
+                      placeholder="Write your post content here"
+                      maxlength="20000">
             </textarea>
         </div>
 
@@ -33,13 +32,12 @@
         {
             <div class="mb-3">
                 <label for="postAuthor" class="form-label">Author</label>
-                <input
-                    type="text"
-                    class="form-control"
-                    id="postAuthor"
-                    @bind="BlogPost.Author"
-                    placeholder="Enter author name"
-                />
+                <input type="text"
+                       class="form-control"
+                       id="postAuthor"
+                       @bind="BlogPost.Author"
+                       placeholder="Enter author name"
+                       @onkeypress="(keyEvent) => OnSaveClicked(keyEvent)" />
             </div>
         }
 
@@ -69,15 +67,34 @@
 
     private bool IsNewPost => BlogPost.Id == 0;
 
+    private ElementReference authorNameInput;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await authorNameInput.FocusAsync();
+        }
+    }
+
     private async Task OnSaveClicked()
     {
-        if(IsNewPost)
+        if (IsNewPost)
         {
             await OnSave.InvokeAsync(BlogPost);
             return;
         }
 
         await OnUpdate.InvokeAsync(BlogPost);
+    }
+
+    private async Task OnSaveClicked(KeyboardEventArgs keyboardEvent)
+    {
+        if (keyboardEvent.Key == "Enter")
+        {
+            await authorNameInput.FocusAsync();
+            await OnSaveClicked();
+        }
     }
 
     private async Task OnCancelClicked()

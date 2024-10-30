@@ -54,5 +54,10 @@
         {
             return HashCode.Combine(Id, Author, Content, Title, PublishedDate, ViewCount, Comments);
         }
+
+        public bool Valid()
+        {
+            return !string.IsNullOrWhiteSpace(Title) && !string.IsNullOrWhiteSpace(Author) && !string.IsNullOrWhiteSpace(Content);
+        }
     }
 }

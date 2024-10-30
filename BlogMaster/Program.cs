@@ -3,7 +3,6 @@ using BlogMaster.Database;
 using BlogMaster.Models;
 using BlogMaster.Services.Implementations;
 using BlogMaster.Services.Interfaces;
-using BlogMaster.Shared.Implementations;
 using BlogMaster.Shared.Interfaces;
 using BlogMaster.Shared.Models;
 using BlogMaster;
@@ -12,8 +11,10 @@ using Microsoft.EntityFrameworkCore;
 using System.IO.Compression;
 using Microsoft.AspNetCore.Mvc;
 using BlogMaster.Middleware;
-using BlogMaster.Utility;
 using System.Text.Json;
+using BlogMaster.Client.Services.Implementations;
+using BlogMaster.Client.Services.Interfaces;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 AppSettings appSettings = await InitializeAppSettings(builder);
@@ -68,8 +69,38 @@ void ConfigureServices(WebApplicationBuilder builder, AppSettings appSettings)
 
     builder.Services.AddScoped<IBlogSqlService, BlogSqlService>();
     builder.Services.AddScoped<IBlogService, BlogService>();
-    builder.Services.AddScoped<IWebAssemblyStateCacheService<BlogDto>, WebAssemblyStateCacheService<BlogDto>>();
-    builder.Services.AddScoped<IWebAssemblyStateCacheService<List<BlogDto>>, WebAssemblyStateCacheService<List<BlogDto>>>();
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        {
+            var user = context.User;
+            bool authenticated = user.Identity?.IsAuthenticated ?? false;
+            string? userId = authenticated ? user.Identity?.Name : context.Connection.RemoteIpAddress?.ToString();
+            return RateLimitPartition.GetTokenBucketLimiter(userId ?? "anonymous", partition => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = 30,
+                ReplenishmentPeriod = TimeSpan.FromMilliseconds(500),
+                TokensPerPeriod = 20,
+                QueueProcessingOrder = QueueProcessingOrder.NewestFirst,
+                QueueLimit = 5
+            });
+        });
+
+        options.OnRejected = (context, cancellationToken) =>
+        {
+            context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+            return ValueTask.CompletedTask;
+        };
+    });
+
+    builder.Services.AddMemoryCache(options =>
+    {
+        options.SizeLimit = 1024 * 1024 * 50; // 50 MB
+        options.CompactionPercentage = 0.2; // Evicts 20% of cache entries when under memory pressure
+        options.ExpirationScanFrequency = TimeSpan.FromMinutes(5);
+    });
+
+    builder.Services.AddScoped<IWebAssemblyStateCacheService, WebAssemblyStateCacheService>();
 }
 
 void ConfigureMiddleware(WebApplication app)
@@ -84,7 +115,15 @@ void ConfigureMiddleware(WebApplication app)
         app.UseHsts();
     }
 
-    app.UseMiddleware<CustomMiddleware>();
+    app.UseRateLimiter();
+
+    app.Use(async (context, next) =>
+    {
+        using var dbContext = context.RequestServices.GetRequiredService<BlogDbContext>();
+        var customMiddleware = new CustomMiddleware(next, dbContext);
+        await customMiddleware.InvokeAsync(context);
+    });
+
     app.UseHttpsRedirection();
     app.UseResponseCompression();
     app.UseStaticFiles(new StaticFileOptions
@@ -136,8 +175,7 @@ void ConfigureEndpoints(WebApplication app)
 
     app.MapGet("/api/blogs/limited", (HttpContext context) =>
     {
-        bool limited = ClientRateLimiter.IsLimitReached(context);
-        return limited ? Results.NoContent() : Results.Ok();
+        return Results.Ok();
     });
 
     app.MapGet("/api/blogs/visitors", async (HttpContext context, IBlogSqlService blogSqlService) =>

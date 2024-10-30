@@ -48,14 +48,20 @@
 
     async Task HandleSave(BlogDto updatedBlog)
     {
-        await blogService.CreateBlog(updatedBlog);
-        navigationManager.NavigateTo("/blogs");
+        if (updatedBlog.Valid())
+        {
+            await blogService.CreateBlog(updatedBlog);
+            navigationManager.NavigateTo("/blogs");
+        }
     }
 
     async Task HandleUpdate(BlogDto updatedBlog)
     {
-        await blogService.UpdateBlog(updatedBlog);
-        navigationManager.NavigateTo("/blogs");
+        if (updatedBlog.Valid())
+        {
+            await blogService.UpdateBlog(updatedBlog);
+            navigationManager.NavigateTo("/blogs");
+        }
     }
 
     void HandleCancel()

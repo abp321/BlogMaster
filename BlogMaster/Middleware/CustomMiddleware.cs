@@ -1,13 +1,12 @@
-﻿using BlogMaster.Extensions;
-using BlogMaster.Utility;
+﻿using BlogMaster.Database;
+using BlogMaster.Extensions;
 
 namespace BlogMaster.Middleware
 {
-    public class CustomMiddleware(RequestDelegate next, IServiceProvider serviceProvider)
+    public class CustomMiddleware(RequestDelegate next, BlogDbContext dbContext)
     {
         private const string redirectPath = "/redirects.html";
         private const string limitCheckApi = "/api/blogs/limited";
-        private static readonly ClientRateLimiter rateLimiter = new(100);
 
         public Task InvokeAsync(HttpContext context)
         {
@@ -17,13 +16,7 @@ namespace BlogMaster.Middleware
 
             if (!path.Contains('.') && !path.Contains("api"))
             {
-                Scripts.LogVisitor(currentIp, serviceProvider);
-            }
-
-            if (rateLimiter.IsLimitReached(currentIp))
-            {
-                context.Response.Redirect(redirectPath);
-                return Task.Delay(1000);
+                Scripts.LogVisitor(currentIp, dbContext);
             }
 
             return next(context);

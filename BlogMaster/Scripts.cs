@@ -27,12 +27,10 @@ namespace BlogMaster
             });
         }
 
-        public static void LogVisitor(string ipAddress, IServiceProvider serviceProvider)
+        public static void LogVisitor(string ipAddress, BlogDbContext dbContext)
         {
             BackgroundTask.Schedule(() => 
             {
-                using var scope = serviceProvider.CreateScope();
-                var context = scope.ServiceProvider.GetRequiredService<BlogDbContext>();
                 const string sql = @"
         INSERT INTO Visitors (IpAddress, LastVisit, VisitCount)
         VALUES (@ipAddress, @lastVisit, 1)
@@ -45,7 +43,7 @@ namespace BlogMaster
                 new SqliteParameter("@lastVisit", DateTime.UtcNow)
                     ];
 
-                context.Database.ExecuteSqlRaw(sql, parameters);
+                dbContext.Database.ExecuteSqlRaw(sql, parameters);
             });
         }
 

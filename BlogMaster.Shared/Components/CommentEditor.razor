@@ -13,7 +13,7 @@
                 @bind="comment.Author"
                 placeholder="Enter your name"
                 maxlength="30"
-            />
+                @ref="authorNameInput" />
         </div>
 
         <div class="mb-3">
@@ -39,6 +39,7 @@
     public EventCallback<CommentDto> OnCommentSubmitted { get; set; }
 
     private CommentDto comment = new();
+    private ElementReference authorNameInput;
 
     async Task SubmitComment()
     {
@@ -46,6 +47,14 @@
         {
             await OnCommentSubmitted.InvokeAsync(comment);
             comment = new CommentDto();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await authorNameInput.FocusAsync();
         }
     }
 }
