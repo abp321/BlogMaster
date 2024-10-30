@@ -2,6 +2,7 @@
 using BlogMaster.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using BlogMaster.Models.Entities;
+using BlogMaster.Client.Utility;
 
 namespace BlogMaster.Services.Implementations
 {
@@ -21,61 +22,70 @@ namespace BlogMaster.Services.Implementations
                 .ToListAsync();
         }
 
-        public async Task<BlogEntity?> CreateBlog(BlogEntity blogEntity)
+        public Task<BlogEntity?> CreateBlog(BlogEntity blogEntity)
         {
-            try
+            return BackgroundTask.Run(() => 
             {
-                blogEntity.PublishedDate = DateTime.UtcNow;
-                context.Blogs.Add(blogEntity);
-                await context.SaveChangesAsync();
-                return blogEntity;
-            }
-            catch
-            {
-                return null;
-            }
+                try
+                {
+                    blogEntity.PublishedDate = DateTime.UtcNow;
+                    context.Blogs.Add(blogEntity);
+                    context.SaveChanges();
+                    return blogEntity;
+                }
+                catch
+                {
+                    return null;
+                }
+            });
         }
 
-        public async Task<BlogEntity?> UpdateBlog(BlogEntity blogEntity)
+        public Task<BlogEntity?> UpdateBlog(BlogEntity blogEntity)
         {
-            try
+            return BackgroundTask.Run(() => 
             {
-                var existingBlog = await context.Blogs
-                    .Include(b => b.Comments)
-                    .FirstOrDefaultAsync(b => b.Id == blogEntity.Id);
+                try
+                {
+                    var existingBlog = context.Blogs
+                        .Include(b => b.Comments)
+                        .FirstOrDefault(b => b.Id == blogEntity.Id);
 
-                if (existingBlog is null) return null;
+                    if (existingBlog is null) return null;
 
-                context.Entry(existingBlog).CurrentValues.SetValues(blogEntity);
-                UpdateComments(existingBlog, blogEntity.Comments);
+                    context.Entry(existingBlog).CurrentValues.SetValues(blogEntity);
+                    UpdateComments(existingBlog, blogEntity.Comments);
 
-                await context.SaveChangesAsync();
-                return await context.Blogs
-                    .Include(b => b.Comments)
-                    .FirstOrDefaultAsync(b => b.Id == existingBlog.Id);
-            }
-            catch
-            {
-                return null;
-            }
+                    context.SaveChanges();
+                    return context.Blogs
+                        .Include(b => b.Comments)
+                        .FirstOrDefault(b => b.Id == existingBlog.Id);
+                }
+                catch
+                {
+                    return null;
+                }
+            });
         }
 
-        public async Task<bool> DeleteBlog(int id)
+        public Task<bool> DeleteBlog(int id)
         {
-            try
+            return BackgroundTask.Run(() => 
             {
-                var blog = await context.Blogs.FindAsync(id);
+                try
+                {
+                    var blog = context.Blogs.Find(id);
 
-                if (blog is null) return false;
+                    if (blog is null) return false;
 
-                context.Blogs.Remove(blog);
-                await context.SaveChangesAsync();
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+                    context.Blogs.Remove(blog);
+                    context.SaveChanges();
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            });
         }
 
         public IAsyncEnumerable<VisitorEntity> GetVisitors()
