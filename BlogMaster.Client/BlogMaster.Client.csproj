@@ -8,7 +8,7 @@
 		<StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
 		<BlazorWebAssemblyEnableLinker>true</BlazorWebAssemblyEnableLinker>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-		<RunAOTCompilation>true</RunAOTCompilation>
+		<RunAOTCompilation Condition="'$(Configuration)' == 'Release'">true</RunAOTCompilation>
 		<InvariantGlobalization>true</InvariantGlobalization>
 		<ServerGarbageCollection>false</ServerGarbageCollection>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
