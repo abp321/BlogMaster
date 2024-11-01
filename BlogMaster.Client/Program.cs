@@ -1,3 +1,4 @@
+using BlogMaster.Client.Extensions;
 using BlogMaster.Client.Services.Implementations;
 using BlogMaster.Client.Services.Interfaces;
 using BlogMaster.Shared.Interfaces;
@@ -10,5 +11,6 @@ builder.Services.AddScoped<IWebAssemblyStateCacheService, WebAssemblyStateCacheS
 builder.Services.AddHttpClient<IBlogService, BlogClientService>(client =>
 {
     client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
-}).AddStandardResilienceHandler();
+}).AddCustomResilienceHandler().RemoveAllLoggers();
 await builder.Build().RunAsync();
+

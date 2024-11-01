@@ -36,30 +36,6 @@ async Task<AppSettings> InitializeAppSettings(WebApplicationBuilder builder)
 
 void ConfigureServices(WebApplicationBuilder builder, AppSettings appSettings)
 {
-    builder.Services.AddResponseCompression(options =>
-    {
-        options.EnableForHttps = true;
-        options.Providers.Add<BrotliCompressionProvider>();
-        options.Providers.Add<GzipCompressionProvider>();
-        options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
-        [
-            "application/octet-stream",
-            "application/javascript",
-            "application/wasm",
-            "text/css",
-            "text/html",
-            "application/json",
-            "font/woff",
-            "font/woff2",
-            "image/svg+xml"
-        ]);
-    });
-
-    builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
-    {
-        options.Level = CompressionLevel.Optimal;
-    });
-
     builder.Services.AddDbContext<BlogDbContext>(options =>
         options.UseSqlite(appSettings.SqlConnectionString));
 
@@ -125,7 +101,6 @@ void ConfigureMiddleware(WebApplication app)
     });
 
     app.UseHttpsRedirection();
-    app.UseResponseCompression();
     app.UseStaticFiles(new StaticFileOptions
     {
         OnPrepareResponse = ctx =>
