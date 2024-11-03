@@ -4,20 +4,7 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
-		<StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
-		<BlazorWebAssemblyEnableLinker>true</BlazorWebAssemblyEnableLinker>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-		<RunAOTCompilation Condition="'$(Configuration)' == 'Release'">true</RunAOTCompilation>
-		<InvariantGlobalization>true</InvariantGlobalization>
-		<ServerGarbageCollection>false</ServerGarbageCollection>
-		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
-		<Optimize>true</Optimize>
-		<DebugType>pdbonly</DebugType>
-		<PublishTrimmed>true</PublishTrimmed>
 	</PropertyGroup>
 
 	<ItemGroup>
